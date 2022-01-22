@@ -1,0 +1,19 @@
+{
+  "name": "i-recommend-back-end",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlanisYates/i-recommend-back-end.git"
+  },
+  "author": "Alanis Yates",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AlanisYates/i-recommend-back-end/issues"
+  },
+  "homepage": "https://github.com/AlanisYates/i-recommend-back-end#readme"
+}
