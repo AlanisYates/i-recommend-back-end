@@ -40,10 +40,20 @@ const userSchema = new mongoose.Schema({
   passwordResetExpires: Date,
 });
 
+// Set the passwordChandedAt field in the db if pasword is ever reset later
 userSchema.pre("save", function (next) {
   if (!this.isModified("password") || this.isNew) return next();
 
-  this.passwordChangedAt = Date.now() - 1000;
+  this.passwordChangedAt = Date.now() - 1000; // -1000 incase the DB takes longer to save than the JWT creation
+  next();
+});
+
+// Encrypt the password that is saved into the DB upon reset or signup
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
+  this.password = await bcrypt.hash(this.password, 12);
+  this.passwordConfirm = undefined; // preventing passConfirm from saving into the DB
   next();
 });
 
