@@ -57,6 +57,32 @@ exports.createUser = async function (req, res, next) {
   }
 };
 
+exports.updateUser = async function (req, res, next) {
+  try {
+    const id = req.params.id;
+    const { email, username } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { email, username },
+      {
+        new: true,
+        runValidatiors: true,
+      }
+    );
+    console.log(user);
+
+    await res.status(200).json({
+      status: "success",
+      data: {
+        user,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.deleteUser = async function (req, res, next) {
   try {
     const id = req.params.id;
