@@ -6,7 +6,7 @@ exports.getUsers = async function (req, res, next) {
   try {
     const users = await User.find();
 
-    await res.status(200).json({
+    res.status(200).json({
       status: "success",
       results: users.length,
       users,
@@ -23,7 +23,7 @@ exports.getUser = async function (req, res, next) {
 
     //console.log(user);
 
-    await res.status(200).json({
+    res.status(200).json({
       status: "success",
       user,
     });
@@ -46,7 +46,7 @@ exports.createUser = async function (req, res, next) {
     //console.log("creating User: \n", username, "\n", email);
     const newUser = await User.create(body);
 
-    await res.status(201).json({
+    res.status(201).json({
       status: "success",
       data: {
         newUser,
@@ -72,7 +72,7 @@ exports.updateUser = async function (req, res, next) {
     );
     console.log(user);
 
-    await res.status(200).json({
+    res.status(200).json({
       status: "success",
       data: {
         user,
@@ -94,7 +94,7 @@ exports.deleteUser = async function (req, res, next) {
     if (!deletedUser) {
       return next(new Error("No User found with that ID"));
     }
-    await res.status(204).json({
+    res.status(204).json({
       status: "success",
       data: {
         user: null,
