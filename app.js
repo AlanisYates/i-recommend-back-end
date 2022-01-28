@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 
 const userRouter = require("./routes/userRoutes");
+const authRouter = require("./routes/authRoutes");
 const globalErrorHandler = require("./controllers/errorController");
 
 const app = express();
@@ -16,6 +17,7 @@ app.use(morgan("dev"));
 
 // ROUTES
 app.use("/users", userRouter);
+app.use("/auth", authRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello World");

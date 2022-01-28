@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const jwt = require("jsonwebtoken");
 
 const User = require("../models/userModel");
+const sendEmail = require("../utils/email");
 
 const signJWT = (payload) => {
   return jwt.sign({ payload }, process.env.JWT_SECRET, {
@@ -34,7 +35,6 @@ function sendJWT(res, user) {
 
 exports.login = async (req, res, next) => {
   try {
-    // provide correct user and pass
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -48,9 +48,6 @@ exports.login = async (req, res, next) => {
     }
 
     sendJWT(res, user);
-    // jwt expired
-    //
-    // give jwt
   } catch (err) {
     next(err);
   }
@@ -58,8 +55,6 @@ exports.login = async (req, res, next) => {
 
 exports.signup = async (req, res, next) => {
   try {
-    // create user
-    // encrypt pass. dont save pass confirm
     const { username, password, passwordConfirm, email } = req.body;
 
     const user = await User.create({
@@ -75,11 +70,58 @@ exports.signup = async (req, res, next) => {
   }
 };
 
-exports.forgotPassword = () => {
-  // send reset link
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const user = await User.findOne({ username: req.body.username });
+
+    if (!user) {
+      return next(new Error(`User ${req.body.username} does not exist`));
+    }
+
+    // Create a reset token for the current user document and save it back to the database
+    const resetToken = user.createPasswordResetToken();
+
+    await user.save({ validateBeforeSave: false });
+
+    // Send an email with a the acess token.
+    const resetURL = `${req.protocol}://${req.get(
+      "host"
+    )}/auth/resetPassword/${resetToken}`;
+
+    const message = `Forgot Password reset link: ${resetURL}\nIf you didn't forget your password, please ignore this email.`;
+
+    await sendEmail(user.email, "Password Reset Link", message);
+
+    res.status(201).json({
+      status: "success",
+      data: {
+        message: `Password reset link sent to ${user.email}`,
+      },
+    });
+  } catch (err) {
+    // reset fields that were modified in createPasswordResetToken()
+    const user = await User.findOne({ username: req.body.username });
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
+    next(err);
+  }
 };
 
-exports.resetPassword = () => {
+exports.resetPassword = async (req, res, next) => {
   // submit new password
   // encrypt and save to db
+  try {
+    const resetToken = req.params.token;
+    res.status(200).json({
+      status: "success",
+      data: {
+        message: `link works ${resetToken}`,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
 };
