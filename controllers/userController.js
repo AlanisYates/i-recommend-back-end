@@ -72,6 +72,10 @@ exports.updateUser = async function (req, res, next) {
     );
     console.log(user);
 
+    if (!user) {
+      return next(new Error(`User for id ${id} does not exist`));
+    }
+
     res.status(200).json({
       status: "success",
       data: {
