@@ -21,7 +21,9 @@ exports.getUser = async function (req, res, next) {
     const id = req.params.id;
     const user = await User.findById(id);
 
-    //console.log(user);
+    if (!user) {
+      return next(new Error(`User for id ${id} does not exist`));
+    }
 
     res.status(200).json({
       status: "success",
@@ -91,13 +93,14 @@ exports.deleteUser = async function (req, res, next) {
   try {
     const id = req.params.id;
 
-    const deletedUser = await User.findByIdAndDelete(id);
+    const user = await User.findByIdAndDelete(id);
 
-    console.log(deletedUser);
+    console.log(user);
 
-    if (!deletedUser) {
-      return next(new Error("No User found with that ID"));
+    if (!user) {
+      return next(new Error(`User for id ${id} does not exist`));
     }
+
     res.status(204).json({
       status: "success",
       data: {

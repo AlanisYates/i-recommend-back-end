@@ -72,10 +72,12 @@ exports.signup = async (req, res, next) => {
 
 exports.forgotPassword = async (req, res, next) => {
   try {
-    const user = await User.findOne({ username: req.body.username });
+    const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
-      return next(new Error(`User ${req.body.username} does not exist`));
+      return next(
+        new Error(`Email ${req.body.email} does not yet have an account`)
+      );
     }
 
     // Create a reset token for the current user document and save it back to the database
