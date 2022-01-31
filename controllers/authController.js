@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import crypto from "crypto";
 import mongoose from "mongoose";
 const jwt = require("jsonwebtoken");
 
@@ -113,14 +113,29 @@ exports.forgotPassword = async (req, res, next) => {
 };
 
 exports.resetPassword = async (req, res, next) => {
-  // submit new password
-  // encrypt and save to db
   try {
-    const resetToken = req.params.token;
+    // We hashed the reset token before saving to the DB, so to verify we must hash the req.params token
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+
+    const user = await User.findOne({ passwordResetToken: hashedToken });
+
+    if (!user || user.passwordResetExpires < Date.now()) {
+      return next(new Error("Reset Token is invalid or expired."));
+    }
+
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+
+    await user.save();
+
+    user.password = undefined; // remove password from output
     res.status(200).json({
       status: "success",
       data: {
-        message: `link works ${resetToken}`,
+        user,
       },
     });
   } catch (err) {
