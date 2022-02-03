@@ -1,6 +1,6 @@
 const RecModel = require("../models/recommendationModel");
 
-module.exports = async function createRec(req, res, next) {
+exports.createRec = async function (req, res, next) {
   try {
     const body = {
       name: req.body.name,

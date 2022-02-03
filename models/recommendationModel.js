@@ -2,8 +2,12 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 
 const recommendationSchema = new mongoose.Schema({
-  name: String,
+  name: {
+    type: String,
+    required: [true, "Please, include a name"],
+  },
   rating: {
+    type: Number,
     min: [0, "The minimum rating is 0"],
     max: [5, "The maximum rating is 5"],
   },
@@ -24,6 +28,7 @@ const recommendationSchema = new mongoose.Schema({
     required: [true, "Please, include a description"],
   },
   cost: {
+    type: String,
     enum: {
       values: ["low", "medium", "high", "free"],
       message: "Price can only be, low, medium, high, or free",
@@ -34,9 +39,9 @@ const recommendationSchema = new mongoose.Schema({
   googleMapsLink: String,
 });
 
-const recommendationModel = new mongoose.model(
+const RecommendationModel = new mongoose.model(
   "recModel",
   recommendationSchema
 );
 
-module.exports = recommendationModel;
+module.exports = RecommendationModel;

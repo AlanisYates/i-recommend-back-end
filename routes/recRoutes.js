@@ -1,4 +1,4 @@
-const express = requrie("express");
+const express = require("express");
 const recController = require("../controllers/recommendationController");
 
 const router = express.Router();
