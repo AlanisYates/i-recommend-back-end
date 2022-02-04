@@ -4,6 +4,7 @@ import morgan from "morgan";
 const userRouter = require("./routes/userRoutes");
 const authRouter = require("./routes/authRoutes");
 const recRouter = require("./routes/recRoutes");
+const itinerariesRouter = require("./routes/itinerariesRouter");
 const globalErrorHandler = require("./controllers/errorController");
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(morgan("dev"));
 app.use("/users", userRouter);
 app.use("/auth", authRouter);
 app.use("/recs", recRouter);
+//app.use("itineraries", itinerariesRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello World");

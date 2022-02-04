@@ -12,6 +12,7 @@ exports.createRec = async function (req, res, next) {
       businessType: req.body.businessType,
       website: req.body.website,
       googleMapsLink: req.body.googleMapsLink,
+      notes: req.body.notes,
     };
 
     const newRec = await RecModel.create(body);
@@ -77,6 +78,7 @@ exports.updateRec = async function (req, res, next) {
       businessType: req.body.businessType,
       website: req.body.website,
       googleMapsLink: req.body.googleMapsLink,
+      notes: req.body.notes,
     };
 
     const updatedRec = await RecModel.findByIdAndUpdate(id, body, {

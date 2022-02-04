@@ -34,6 +34,7 @@ const recommendationSchema = new mongoose.Schema({
       message: "Price can only be, low, medium, high, or free",
     },
   },
+  notes: String,
   businessType: String,
   website: String,
   googleMapsLink: String,
