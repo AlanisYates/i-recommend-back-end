@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 
-const recommendationSchema = new mongoose.Schema({
+const recSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, "Please, include a name"],
@@ -40,9 +40,6 @@ const recommendationSchema = new mongoose.Schema({
   googleMapsLink: String,
 });
 
-const RecommendationModel = new mongoose.model(
-  "recModel",
-  recommendationSchema
-);
+const RecModel = new mongoose.model("recModel", recSchema);
 
-module.exports = RecommendationModel;
+module.exports = RecModel;

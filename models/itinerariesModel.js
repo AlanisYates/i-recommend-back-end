@@ -1,8 +1,13 @@
 const mongoose = require("mongoose");
 
-const ItinerarySchema = new mongoose.Schema({
+const itinSchema = new mongoose.Schema({
   name: {
-    String,
-    required: [true, "Please, include a name"],
+    type: String,
+    required: [true, "Please, include an itinerary name"],
   },
+  recommendations: [String],
 });
+
+const ItinModel = mongoose.model("ItinModel", itinSchema);
+
+module.exports = ItinModel;
