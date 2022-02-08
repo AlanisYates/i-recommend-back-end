@@ -1,6 +1,6 @@
 import express from "express";
 import morgan from "morgan";
-
+import cors from 'cors'
 const userRouter = require("./routes/userRoutes");
 const authRouter = require("./routes/authRoutes");
 const recRouter = require("./routes/recRoutes");
@@ -17,6 +17,7 @@ app.use(express.json({ limit: "10kb" }));
 // Development logging info
 app.use(morgan("dev"));
 
+app.use(cors())
 // ROUTES
 app.use("/users", userRouter);
 app.use("/auth", authRouter);
