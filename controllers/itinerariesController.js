@@ -6,6 +6,7 @@ exports.getItins = async function (req, res, next) {
 
     res.status(200).json({
       status: "success",
+      results: itins.length,
       data: {
         itineraries: itins,
       },
@@ -20,6 +21,12 @@ exports.createItin = async function (req, res, next) {
     const body = {
       name: req.body.name,
       recommendations: req.body.recommendations,
+      orderOfRecs: req.body.orderOfRecs,
+      sortBy: req.body.sortBy,
+      description: req.body.description,
+      origionalAuthor: req.body.origionalAuthor,
+      public: req.body.public,
+      zip: req.body.zip,
     };
 
     const newItin = await ItinModel.create(body);
@@ -28,6 +35,27 @@ exports.createItin = async function (req, res, next) {
       status: "success",
       data: {
         newItin,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getItin = async function (req, res, next) {
+  try {
+    const id = req.params.id;
+
+    const itin = await ItinModel.findById(id);
+
+    if (!itin) {
+      return next(new Error("Itinerary ID is invalid."));
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        itin,
       },
     });
   } catch (err) {

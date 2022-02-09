@@ -19,7 +19,10 @@ const recSchema = new mongoose.Schema({
     city: String,
     zip: {
       type: String,
-      validate: [validator.isPostalCode, "Please, enter a valid postal code"],
+      validate: function (zipcode) {
+        return validator.isPostalCode(zipcode, "US");
+      },
+      message: "Please, enter a valid postal code",
     },
   },
   images: [String],
