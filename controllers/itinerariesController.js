@@ -62,3 +62,55 @@ exports.getItin = async function (req, res, next) {
     next(err);
   }
 };
+
+exports.updateItin = async function (req, res, next) {
+  try {
+    const id = req.params.id;
+    const body = {
+      name: req.body.name,
+      recommendations: req.body.recommendations,
+      orderOfRecs: req.body.orderOfRecs,
+      sortBy: req.body.sortBy,
+      description: req.body.description,
+      origionalAuthor: req.body.origionalAuthor,
+      public: req.body.public,
+      zip: req.body.zip,
+    };
+
+    const itin = await ItinModel.findByIdAndUpdate(id, body);
+
+    if (!itin) {
+      return next(new Error("Itinerary ID is invalid."));
+    }
+
+    res.status(201).json({
+      status: "success",
+      data: {
+        itin,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deleteItin = async function (req, res, next) {
+  try {
+    const id = req.params.id;
+
+    const itin = await ItinModel.findByIdAndDelete(id);
+
+    if (!itin) {
+      return next(new Error("Itinerary ID is invalid."));
+    }
+
+    res.status(204).json({
+      status: "success",
+      data: {
+        itin,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
