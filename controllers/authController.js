@@ -142,3 +142,16 @@ exports.resetPassword = async (req, res, next) => {
     next(err);
   }
 };
+
+module.oAuth = function (req, res, next) {
+  try {
+    // first redirect user to github oauth page to get a oaugh token
+    // then tyeh somehow come back to our page and head into another route that will send a post rquest to github with the oauth token
+    // github response hands back a auth token.
+    // use github auth token to access github api on the users behalf. get their user id from git
+    // create JWT for the user with github id as the payload.
+    // send back JWT in response
+  } catch (err) {
+    next(err);
+  }
+};
