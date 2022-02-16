@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import mongoose from "mongoose";
 const jwt = require("jsonwebtoken");
+const superagent = require("superagent");
 
 const User = require("../models/userModel");
 const sendEmail = require("../utils/email");
@@ -143,7 +144,26 @@ exports.resetPassword = async (req, res, next) => {
   }
 };
 
-module.oAuth = function (req, res, next) {
+// Call this function to sign in with githup using OAuth
+exports.githubSignIn = function (req, res, next) {
+  try {
+    console.log("asdfasdfa");
+    res.redirect(
+      `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}`
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
+const githubAuthToken = function (req) {
+  try {
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.requestGithubAPI = async function (req, res, next) {
   try {
     // first redirect user to github oauth page to get a oaugh token
     // then tyeh somehow come back to our page and head into another route that will send a post rquest to github with the oauth token
@@ -151,6 +171,30 @@ module.oAuth = function (req, res, next) {
     // use github auth token to access github api on the users behalf. get their user id from git
     // create JWT for the user with github id as the payload.
     // send back JWT in response
+
+    //console.log(req.query.code);
+
+    const response = await superagent
+      .post(`https://github.com/login/oauth/access_token`)
+      .send({
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code: req.query.code,
+      });
+
+    // const params = new URLSearchParams(data);
+    // console.log(params.get("access_token"));
+
+    const data = response.text;
+    const params = new URLSearchParams(data);
+    const accessToken = params.get("access_token");
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        accessToken,
+      },
+    });
   } catch (err) {
     next(err);
   }
