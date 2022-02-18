@@ -45,7 +45,7 @@ exports.login = async (req, res, next) => {
     const user = await User.findOne({ username: username }).select("+password");
 
     if (!user || !(await user.correctPassword(password, user.password))) {
-      throw new Error("Username or password is incorrect");
+      return next(new Error("Username or password is incorrect"));
     }
 
     sendJWT(res, user);
@@ -147,7 +147,6 @@ exports.resetPassword = async (req, res, next) => {
 // Call this function to sign in with githup using OAuth
 exports.githubSignIn = function (req, res, next) {
   try {
-    console.log("asdfasdfa");
     res.redirect(
       `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}`
     );
@@ -189,13 +188,31 @@ exports.requestGithubAPI = async function (req, res, next) {
     const params = new URLSearchParams(data);
     const accessToken = params.get("access_token");
 
+    const response2 = await superagent
+      .get("https://api.github.com/user")
+      .set("Authorization", `token ${accessToken}`)
+      .set("Accept", "application/json")
+      .set("user-agent", "node.js");
+
+    const text = JSON.parse(response2.text);
+    //const text = userData.text;
+
+    console.log(text.id);
+    const githubID = text.id;
+
+    const user = await User.findOne({ githubID: githubID });
+    console.log(user);
+    //sendJWT(res, user);
+
+    console.log(data2);
     res.status(200).json({
       status: "success",
       data: {
-        accessToken,
+        text,
       },
     });
   } catch (err) {
     next(err);
+    //console.log(err);
   }
 };
