@@ -39,6 +39,7 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+  githubID: String,
 });
 
 // Set the passwordChandedAt field in the db if pasword is ever reset later

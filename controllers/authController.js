@@ -144,7 +144,9 @@ exports.resetPassword = async (req, res, next) => {
   }
 };
 
-// Call this function to sign in with githup using OAuth
+// Call this function to sign in with github using OAuth
+// Sends the user to Github to sign in. After, they are redirected to the /oauth-callback route. That
+// route calls teh requestGithubAPIAccessToken() function
 exports.githubSignIn = function (req, res, next) {
   try {
     res.redirect(
@@ -155,24 +157,33 @@ exports.githubSignIn = function (req, res, next) {
   }
 };
 
-const githubAuthToken = function (req) {
+// Afrer getting the access token, we then use it to get access to Github's API on behalf of the user. Through
+// The API we can get their githubID. We use this data to finally sign the user into our app.
+const requestGithubAPI = async function (res, accessToken) {
   try {
+    const response = await superagent
+      .get("https://api.github.com/user")
+      .set("Authorization", `token ${accessToken}`)
+      .set("Accept", "application/json")
+      .set("user-agent", "node.js");
+
+    const text = JSON.parse(response.text);
+
+    //console.log(text.id);
+
+    const user = await User.findOne({ githubID: text.id });
+    //console.log(user);
+
+    sendJWT(res, user);
   } catch (err) {
     next(err);
   }
 };
 
-exports.requestGithubAPI = async function (req, res, next) {
+// After user signs in at Github, they get an API access token which we can use to get their github account data.
+// This function pulls out the access token and then calls the function which uses the token to get their github data.
+exports.requestGithubAPIAccessToken = async function (req, res, next) {
   try {
-    // first redirect user to github oauth page to get a oaugh token
-    // then tyeh somehow come back to our page and head into another route that will send a post rquest to github with the oauth token
-    // github response hands back a auth token.
-    // use github auth token to access github api on the users behalf. get their user id from git
-    // create JWT for the user with github id as the payload.
-    // send back JWT in response
-
-    //console.log(req.query.code);
-
     const response = await superagent
       .post(`https://github.com/login/oauth/access_token`)
       .send({
@@ -181,38 +192,11 @@ exports.requestGithubAPI = async function (req, res, next) {
         code: req.query.code,
       });
 
-    // const params = new URLSearchParams(data);
-    // console.log(params.get("access_token"));
-
-    const data = response.text;
-    const params = new URLSearchParams(data);
+    const params = new URLSearchParams(response.text);
     const accessToken = params.get("access_token");
 
-    const response2 = await superagent
-      .get("https://api.github.com/user")
-      .set("Authorization", `token ${accessToken}`)
-      .set("Accept", "application/json")
-      .set("user-agent", "node.js");
-
-    const text = JSON.parse(response2.text);
-    //const text = userData.text;
-
-    console.log(text.id);
-    const githubID = text.id;
-
-    const user = await User.findOne({ githubID: githubID });
-    console.log(user);
-    //sendJWT(res, user);
-
-    console.log(data2);
-    res.status(200).json({
-      status: "success",
-      data: {
-        text,
-      },
-    });
+    requestGithubAPI(res, accessToken);
   } catch (err) {
     next(err);
-    //console.log(err);
   }
 };
