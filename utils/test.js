@@ -48,12 +48,10 @@ const readData = function () {
   });
 };
 
-let 
-readData().then((data) => {
-  const user = (async () => {
-    await createGithubUser(data);
-    console.log(user);
-  })();
-});
-
-
+// fix promises
+// readData().then((data) => {
+//   const user = (async () => {
+//     await createGithubUser(data);
+//     console.log(user);
+//   })();
+// });
