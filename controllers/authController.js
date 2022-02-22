@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const superagent = require("superagent");
 
 const User = require("../models/userModel");
+const GitUser = require("../models/githubUserModel");
 const sendEmail = require("../utils/email");
 
 const signJWT = (payload) => {
@@ -157,29 +158,6 @@ exports.githubSignIn = function (req, res, next) {
   }
 };
 
-// Afrer getting the access token, we then use it to get access to Github's API on behalf of the user. Through
-// The API we can get their githubID. We use this data to finally sign the user into our app.
-const requestGithubAPI = async function (res, accessToken) {
-  try {
-    const response = await superagent
-      .get("https://api.github.com/user")
-      .set("Authorization", `token ${accessToken}`)
-      .set("Accept", "application/json")
-      .set("user-agent", "node.js");
-
-    const text = JSON.parse(response.text);
-
-    //console.log(text.id);
-
-    const user = await User.findOne({ githubID: text.id });
-    //console.log(user);
-
-    sendJWT(res, user);
-  } catch (err) {
-    next(err);
-  }
-};
-
 // After user signs in at Github, they get an API access token which we can use to get their github account data.
 // This function pulls out the access token and then calls the function which uses the token to get their github data.
 exports.requestGithubAPIAccessToken = async function (req, res, next) {
@@ -195,8 +173,53 @@ exports.requestGithubAPIAccessToken = async function (req, res, next) {
     const params = new URLSearchParams(response.text);
     const accessToken = params.get("access_token");
 
-    requestGithubAPI(res, accessToken);
+    requestGithubAPI(res, accessToken, next);
   } catch (err) {
     next(err);
   }
+};
+
+// Afrer getting the access token, we then use it to get access to Github's API on behalf of the user. Through
+// The API we can get their githubID. We use this data to finally sign the user into our app.
+const requestGithubAPI = async function (res, accessToken, next) {
+  try {
+    const response = await superagent
+      .get("https://api.github.com/user")
+      .set("Authorization", `token ${accessToken}`)
+      .set("Accept", "application/json")
+      .set("user-agent", "node.js");
+
+    const userData = JSON.parse(response.text);
+
+    //console.log(JSON.stringify(text));
+
+    const user = await User.findOne({ githubID: userData.id });
+    // If they don't have a user in the DB, then its the first time they are signing in.
+    if (!user) {
+      user = createGithubUser(userData);
+    }
+
+    console.log(user);
+
+    sendJWT(res, user);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// users never need to create an account if they sign in with github.
+const createGithubUser = async function (githubUserData) {
+  // "login": "gerbil742",
+  // "id": 23387795,
+  const user = await GitUser.create(userData);
+  const mongoID = user._id;
+
+  user = await GitUser.findByIdAndUpdate(mongoId, {
+    $set: {
+      username: githubUserData.login,
+      githubID: githubUserData.id,
+    },
+  });
+
+  return user;
 };
