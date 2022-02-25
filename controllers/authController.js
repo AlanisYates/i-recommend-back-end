@@ -189,14 +189,14 @@ const requestGithubAPI = async function (res, accessToken, next) {
       .set("Accept", "application/json")
       .set("user-agent", "node.js");
 
-    const userData = JSON.parse(response.text);
+    const githubData = JSON.parse(response.text);
 
-    //console.log(JSON.stringify(text));
+    //console.log(githubData);
 
-    const user = await User.findOne({ githubID: userData.id });
+    let user = await GitUser.findOne({ githubID: githubData.id });
     // If they don't have a user in the DB, then its the first time they are signing in.
     if (!user) {
-      user = createGithubUser(userData);
+      user = await createGithubUser(githubData);
     }
 
     console.log(user);
@@ -207,19 +207,14 @@ const requestGithubAPI = async function (res, accessToken, next) {
   }
 };
 
-// users never need to create an account if they sign in with github.
+// Users never need to create an account if they sign in with github, so we automatically create a user
+// entry for them in teh githubUsers DB.
 const createGithubUser = async function (githubUserData) {
-  // "login": "gerbil742",
-  // "id": 23387795,
-  const user = await GitUser.create(userData);
-  const mongoID = user._id;
+  const dbData = githubUserData;
+  dbData.githubID = dbData.id;
+  dbData.username = dbData.login;
 
-  user = await GitUser.findByIdAndUpdate(mongoId, {
-    $set: {
-      username: githubUserData.login,
-      githubID: githubUserData.id,
-    },
-  });
+  const user = await GitUser.create(dbData);
 
   return user;
 };

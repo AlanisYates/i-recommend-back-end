@@ -19,6 +19,7 @@ mongoose.connect(database).then(() => {
 const createGithubUser = async function (githubUserData) {
   // "login": "gerbil742",
   // "id": 23387795,
+  console.log("githubUserData");
   console.log(githubUserData);
   const modifiedData = githubUserData;
   modifiedData.username = githubUserData.login;
@@ -38,20 +39,54 @@ const createGithubUser = async function (githubUserData) {
 };
 
 const readData = function () {
-  let file;
-  fs.readFile("./githubUserExample.json", (data) => {
-    file = JSON.parse(data);
+  // fs.readFile(
+  //   "C:/Users/jycam/OneDrive/Documents/Projects-DESKTOP-CC563GG/i-reccommend/i-recommend-back-end/utils/githubUserExample.json",
+  //   (err, data) => {
+  //     if (err) return console.log("error reading file");
+  //     //file = JSON.parse(data);
 
-    console.log("file contents");
-    console.log(file);
-    return file;
+  //     console.log("file contents");
+  //     console.log(file);
+  //   }
+  // );
+  // return file;
+  return new Promise((resolve, reject) => {
+    fs.readFile(`${__dirname}/githubUserExample.json`, "utf8", (err, data) => {
+      if (err) reject(err);
+      resolve(data);
+    });
   });
 };
 
-// fix promises
-// readData().then((data) => {
-//   const user = (async () => {
-//     await createGithubUser(data);
-//     console.log(user);
-//   })();
-// });
+//fix promises
+// const data = readData();
+// (async () => {
+//   await createGithubUser(data);
+//   console.log("user");
+//   console.log(user);
+// })();
+
+// const main = async function () {
+//   const data = await readData();
+//   console.log("data");
+//   console.log(data);
+//   const user = await createGithubUser(data);
+//   console.log("user");
+//   console.log(user);
+// };
+
+//main();
+
+readData()
+  .then((data) => {
+    const dbData = JSON.parse(data);
+    dbData.githubID = dbData.id;
+    dbData.username = dbData.login;
+    return GitUser.create(dbData);
+  })
+  .then((user) => {
+    console.log(user);
+  })
+  .catch((err) => {
+    console.log(err);
+  });
