@@ -2,18 +2,25 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 const jwt = require("jsonwebtoken");
 const superagent = require("superagent");
+import dotenv from "dotenv";
+import { resolveSoa } from "dns";
+import req from "express/lib/request";
 
 const User = require("../models/userModel");
 const GitUser = require("../models/githubUserModel");
 const sendEmail = require("../utils/email");
 
+dotenv.config({ path: "../config.env" });
+
 const signJWT = (payload) => {
-  return jwt.sign({ payload }, process.env.JWT_SECRET, {
+  return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRATION,
   });
 };
 
 function sendJWT(res, user) {
+  //const payload = { id: user.id, userType: user.userType }; // usertype will be undefined if teh user signed in via email.
+  //console.log(payload);
   const token = signJWT(user.id);
   const cookieOptions = {
     expires: new Date(
@@ -34,6 +41,64 @@ function sendJWT(res, user) {
     },
   });
 }
+
+exports.protect = async (req, res, next) => {
+  try {
+    let token;
+    //console.log(req.headers.authorization);
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+
+    if (!token) {
+      return next(new Error("Please, log in before accessing this page"));
+    }
+
+    const payload = await jwt.verify(token, process.env.JWT_SECRET);
+
+    //console.log(payload);
+    if (!payload) {
+      return next(new Error("JWT is invalid, Please sign in again"));
+    }
+
+    const user = await findUser(payload.id);
+
+    //console.log(user);
+
+    if (!user) {
+      return next(
+        new Error("The user associated with this JWT no longer exists")
+      );
+    }
+
+    // Set the user property on the req obj to use for later middlewares
+    req.user = user;
+    //console.log(req.user);
+
+    // all checks are passed, proceed to the protected route
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+// restrict to is a wrapper function that returns the actual middleware function. needed to pass in paramaters to the
+// middleware function. make sure protect() middleware runs before this func for teh curr user to be put on teh req object
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    console.log(req.user);
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new Error("This account is forbidden from performing this action.")
+      );
+    }
+
+    next();
+  };
+};
 
 exports.login = async (req, res, next) => {
   try {
@@ -213,8 +278,30 @@ const createGithubUser = async function (githubUserData) {
   const dbData = githubUserData;
   dbData.githubID = dbData.id;
   dbData.username = dbData.login;
+  //dbData.userType = "github";
 
   const user = await GitUser.create(dbData);
 
   return user;
+};
+
+const findUser = async function (id) {
+  try {
+    const user = await GitUser.aggregate([
+      {
+        $unionWith: {
+          coll: "users",
+        },
+      },
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(id),
+        },
+      },
+    ]);
+
+    return user[0];
+  } catch (error) {
+    next(error);
+  }
 };

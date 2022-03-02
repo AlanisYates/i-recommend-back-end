@@ -13,4 +13,5 @@ router.route("/resetPassword/:token").post(authContorller.resetPassword);
 router.route("/oauth-callback").get(authContorller.requestGithubAPIAccessToken);
 router.route("/oauth").get(authContorller.githubSignIn);
 
+//router.route("/test").get(authContorller.getAllUsersFromAllDbs);
 module.exports = router;

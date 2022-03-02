@@ -4,7 +4,7 @@ import morgan from "morgan";
 const userRouter = require("./routes/userRoutes");
 const authRouter = require("./routes/authRoutes");
 const recRouter = require("./routes/recRoutes");
-const itinRouter = require("./routes/itinerariesRouter");
+const itinRouter = require("./routes/itinerariesRoutes");
 const globalErrorHandler = require("./controllers/errorController");
 
 const app = express();

@@ -8,6 +8,15 @@ const githubUserSchema = new mongoose.Schema({
   },
   username: String,
   name: String,
+  userType: {
+    type: String,
+    default: "github",
+  },
+  role: {
+    type: String,
+    enum: ["admin", "user"],
+    default: "user",
+  },
 });
 
 const GithubUserModel = mongoose.model("GitUser", githubUserSchema);
