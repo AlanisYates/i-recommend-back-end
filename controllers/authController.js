@@ -1,46 +1,12 @@
 import crypto from "crypto";
-import mongoose from "mongoose";
-const jwt = require("jsonwebtoken");
-const superagent = require("superagent");
 import dotenv from "dotenv";
-import { resolveSoa } from "dns";
-import req from "express/lib/request";
+import mongoose from "mongoose";
 
+const jwt = require("../utils/jwtUtils");
 const User = require("../models/userModel");
-const GitUser = require("../models/githubUserModel");
 const sendEmail = require("../utils/email");
 
 dotenv.config({ path: "../config.env" });
-
-const signJWT = (payload) => {
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRATION,
-  });
-};
-
-function sendJWT(res, user) {
-  //const payload = { id: user.id, userType: user.userType }; // usertype will be undefined if teh user signed in via email.
-  //console.log(payload);
-  const token = signJWT(user.id);
-  const cookieOptions = {
-    expires: new Date(
-      Date.now() + process.env.COOKIE_EXPIRATION * 24 * 60 * 60 * 1000 // convert days to milisec
-    ),
-    httpOnly: true,
-  };
-
-  res.cookie("jwt", token, cookieOptions);
-
-  user.password = undefined; // remove password field from output
-
-  res.status(201).json({
-    status: "success",
-    token,
-    data: {
-      user,
-    },
-  });
-}
 
 exports.protect = async (req, res, next) => {
   try {
@@ -57,7 +23,7 @@ exports.protect = async (req, res, next) => {
       return next(new Error("Please, log in before accessing this page"));
     }
 
-    const payload = await jwt.verify(token, process.env.JWT_SECRET);
+    const payload = await jwt.verifyJWT(token);
 
     //console.log(payload);
     if (!payload) {
@@ -89,7 +55,7 @@ exports.protect = async (req, res, next) => {
 // middleware function. make sure protect() middleware runs before this func for teh curr user to be put on teh req object
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    console.log(req.user);
+    //console.log(req.user);
     if (!roles.includes(req.user.role)) {
       return next(
         new Error("This account is forbidden from performing this action.")
@@ -114,7 +80,7 @@ exports.login = async (req, res, next) => {
       return next(new Error("Username or password is incorrect"));
     }
 
-    sendJWT(res, user);
+    jwt.sendJWT(res, user);
   } catch (err) {
     next(err);
   }
@@ -131,7 +97,7 @@ exports.signup = async (req, res, next) => {
       passwordConfirm,
     });
 
-    sendJWT(res, user);
+    jwt.sendJWT(res, user);
   } catch (err) {
     next(err);
   }
@@ -210,87 +176,13 @@ exports.resetPassword = async (req, res, next) => {
   }
 };
 
-// Call this function to sign in with github using OAuth
-// Sends the user to Github to sign in. After, they are redirected to the /oauth-callback route. That
-// route calls teh requestGithubAPIAccessToken() function
-exports.githubSignIn = function (req, res, next) {
-  try {
-    res.redirect(
-      `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}`
-    );
-  } catch (err) {
-    next(err);
-  }
-};
-
-// After user signs in at Github, they get an API access token which we can use to get their github account data.
-// This function pulls out the access token and then calls the function which uses the token to get their github data.
-exports.requestGithubAPIAccessToken = async function (req, res, next) {
-  try {
-    const response = await superagent
-      .post(`https://github.com/login/oauth/access_token`)
-      .send({
-        client_id: process.env.GITHUB_CLIENT_ID,
-        client_secret: process.env.GITHUB_CLIENT_SECRET,
-        code: req.query.code,
-      });
-
-    const params = new URLSearchParams(response.text);
-    const accessToken = params.get("access_token");
-
-    requestGithubAPI(res, accessToken, next);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// Afrer getting the access token, we then use it to get access to Github's API on behalf of the user. Through
-// The API we can get their githubID. We use this data to finally sign the user into our app.
-const requestGithubAPI = async function (res, accessToken, next) {
-  try {
-    const response = await superagent
-      .get("https://api.github.com/user")
-      .set("Authorization", `token ${accessToken}`)
-      .set("Accept", "application/json")
-      .set("user-agent", "node.js");
-
-    const githubData = JSON.parse(response.text);
-
-    //console.log(githubData);
-
-    let user = await GitUser.findOne({ githubID: githubData.id });
-    // If they don't have a user in the DB, then its the first time they are signing in.
-    if (!user) {
-      user = await createGithubUser(githubData);
-    }
-
-    console.log(user);
-
-    sendJWT(res, user);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// Users never need to create an account if they sign in with github, so we automatically create a user
-// entry for them in teh githubUsers DB.
-const createGithubUser = async function (githubUserData) {
-  const dbData = githubUserData;
-  dbData.githubID = dbData.id;
-  dbData.username = dbData.login;
-  //dbData.userType = "github";
-
-  const user = await GitUser.create(dbData);
-
-  return user;
-};
-
+// Get user by ID from any of the User databases.
 const findUser = async function (id) {
   try {
-    const user = await GitUser.aggregate([
+    const user = await User.aggregate([
       {
         $unionWith: {
-          coll: "users",
+          coll: "gitusers",
         },
       },
       {

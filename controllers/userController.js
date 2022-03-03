@@ -1,6 +1,5 @@
-import bcrypt from "bcrypt";
-
 const User = require("../models/userModel");
+const jwt = require("../utils/jwtUtils");
 
 exports.getUsers = async function (req, res, next) {
   try {
@@ -47,13 +46,13 @@ exports.createUser = async function (req, res, next) {
 
     //console.log("creating User: \n", username, "\n", email);
     const newUser = await User.create(body);
-
-    res.status(201).json({
-      status: "success",
-      data: {
-        newUser,
-      },
-    });
+    await jwt.sendJWT(res, newUser);
+    // res.status(201).json({
+    //   status: "success",
+    //   data: {
+    //     newUser,
+    //   },
+    // });
   } catch (err) {
     next(err);
   }

@@ -6,16 +6,12 @@ const router = express.Router();
 
 router
   .route("/")
-  .post(recController.createRec)
+  .post(authController.protect, recController.createRec)
   .get(authController.protect, recController.getRecs);
 router
   .route("/:id")
-  .get(recController.getRec)
-  .patch(recController.updateRec)
-  .delete(
-    authController.protect,
-    authController.restrictTo("admin"),
-    recController.deleteRec
-  );
+  .get(authController.protect, recController.getRec)
+  .patch(authController.protect, recController.updateRec)
+  .delete(authController.protect, recController.deleteRec);
 
 module.exports = router;
